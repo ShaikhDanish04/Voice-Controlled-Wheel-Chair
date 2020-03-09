@@ -11,7 +11,6 @@ int flag;
 char path[] = {'a', 's', 's', 'a', 's', 'a', 's'};
 
 
-
 void setup() {
   Serial.begin(9600);
   BT.begin(9600);
@@ -23,42 +22,12 @@ void setup() {
 }
 
 void loop() {
-  
-  char message[50] = "";
-  int string_length = 0;
-  
-  while (BT.available()) { //Check if there is an available byte to read
-    
+  String voice_input = bluetooth_voice();
 
-    delay(10); //Delay added to make thing stable
+  if (voice_input.length()) {
 
-    char c = BT.read();
-    message[string_length] = c;
-    
-    string_length++;
-  }
-  
-  if (string_length > 0) {
-    String string = message;
-    Serial.println(string);
-    if (string == "forward") {
-      controller('w');
-    }
-    if (string == "backward") {
-      controller('s');
-    }
-    if (string == "left") {
-      controller('a');
-    }
-    if (string == "right") {
-      controller('d');
-    }
-    if (string == "stop") {
-      controller('f');
-    } else {
-      controller('f');
-    }
-
+    Serial.println(voice_input);
+    voice_operation(voice_input);
   }
 
   if (Serial.available()) {
@@ -94,31 +63,6 @@ void loop() {
   }
 }
 
-bool MLS() {
-  // Mid Line Sensor
-  //    Serial.println(analogRead(sensor_1));
-  while (analogRead(sensor_1) > 500) {
-    return true;
-  }
-  return false;
-}
-bool LTS() {
-  // Left Turn Sensor
-  //    Serial.println(analogRead(sensor_2));
-  while (analogRead(sensor_2) > 500) {
-    return true;
-  }
-  return false;
-}
-bool RTS() {
-  // Right Turn Sensor
-  //    Serial.println(analogRead(sensor_3));
-  while (analogRead(sensor_3) > 500) {
-    return true;
-  }
-  return false;
-}
-
 String controller(int x) {
   switch (x) {
     case 'w':
@@ -152,10 +96,7 @@ String controller(int x) {
           flag = 1;
         }
         if (MLS() && flag == 1) {
-          digitalWrite (3, LOW);
-          digitalWrite (4, LOW);
-          digitalWrite (5, LOW);
-          digitalWrite (6, LOW);
+          controller('f');
           break;
         }
       }
@@ -173,10 +114,7 @@ String controller(int x) {
           flag = 1;
         }
         if (MLS() && flag == 1) {
-          digitalWrite (3, LOW);
-          digitalWrite (4, LOW);
-          digitalWrite (5, LOW);
-          digitalWrite (6, LOW);
+          controller('f');
           break;
         }
       }
@@ -204,4 +142,84 @@ String controller(int x) {
       return "stop";
       break;
   }
+}
+
+String bluetooth_voice() {
+  char message[50] = "";
+  int string_length = 0;
+  String string = "";
+
+  while (BT.available()) { //Check if there is an available byte to read
+    delay(10); //Delay added to make thing stable
+    char c = BT.read();
+    message[string_length] = c;
+    string_length++;
+
+    if (string_length > 0) {
+      string = message;
+    }
+  }
+
+  return string;
+}
+
+void voice_operation(String string) {
+  if (string == "forward") {
+    while (1) {
+      String voice_input = bluetooth_voice();
+      controller('w');
+
+      if (voice_input.length()) {
+        Serial.println("Stop");
+        break;
+      }
+    }
+  }
+  if (string == "backward") {
+    while (1) {
+      String voice_input = bluetooth_voice();
+      controller('s');
+
+      if (voice_input.length()) {
+        Serial.println("Stop");
+        break;
+      }
+    }
+  }
+  if (string == "left") {
+    controller('a');
+  }
+  if (string == "right") {
+    controller('d');
+  }
+  if (string == "stop") {
+    controller('f');
+  } else {
+    controller('f');
+  }
+}
+
+bool MLS() {
+  // Mid Line Sensor
+  //    Serial.println(analogRead(sensor_1));
+  while (analogRead(sensor_1) > 500) {
+    return true;
+  }
+  return false;
+}
+bool LTS() {
+  // Left Turn Sensor
+  //    Serial.println(analogRead(sensor_2));
+  while (analogRead(sensor_2) > 500) {
+    return true;
+  }
+  return false;
+}
+bool RTS() {
+  // Right Turn Sensor
+  //    Serial.println(analogRead(sensor_3));
+  while (analogRead(sensor_3) > 500) {
+    return true;
+  }
+  return false;
 }
