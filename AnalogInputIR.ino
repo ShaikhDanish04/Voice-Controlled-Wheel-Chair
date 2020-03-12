@@ -8,7 +8,6 @@ int sensor_2 = A1;
 int sensor_3 = A2;
 int buffer_state = 0;
 int flag;
-char path[] = {'a', 's', 's', 'a', 's', 'a', 's'};
 
 
 void setup() {
@@ -36,29 +35,6 @@ void loop() {
     if (x == 'q') {
       buffer_state = 0;
       Serial.println("\n Initialed to follow Path : \n");
-    }
-
-    int i = 0;
-    while (buffer_state == 0) {
-      //      Serial.println("In buffer");
-      if (MLS() && !LTS() && !RTS()) {
-        Serial.print("\n Going " + controller('w'));
-      } else if (MLS()) {
-        Serial.print("\n\n Node Found - Going : ");
-        Serial.print(controller(path[i]) + "\n");
-        i++;
-        delay(1000);
-      } else {
-        Serial.println("\n Main line sensor not found");
-        controller('f');
-      }
-      delay(500);
-
-      if ((char)Serial.read() == 'e') {
-        buffer_state = 1;
-        controller('f');
-        Serial.println("Buffer Exit");
-      }
     }
   }
 }
@@ -92,9 +68,7 @@ String controller(int x) {
         digitalWrite (4, LOW);
         digitalWrite (5, LOW);
         digitalWrite (6, LOW);
-        if (!MLS()) {
-          flag = 1;
-        }
+        if (!MLS()) flag = 1;
         if (MLS() && flag == 1) {
           controller('f');
           break;
@@ -110,9 +84,7 @@ String controller(int x) {
         digitalWrite (4, LOW);
         digitalWrite (5, HIGH);
         digitalWrite (6, LOW);
-        if (!MLS()) {
-          flag = 1;
-        }
+        if (!MLS()) flag = 1;
         if (MLS() && flag == 1) {
           controller('f');
           break;
@@ -187,16 +159,62 @@ void voice_operation(String string) {
     }
   }
   if (string == "left") {
-    controller('a');
+     while (1) {
+      String voice_input = bluetooth_voice();
+      controller('a');
+
+      if (voice_input.length()) {
+        Serial.println("Stop");
+        break;
+      }
+    }
   }
   if (string == "right") {
-    controller('d');
+     while (1) {
+      String voice_input = bluetooth_voice();
+      controller('d');
+
+      if (voice_input.length()) {
+        Serial.println("Stop");
+        break;
+      }
+    }
   }
-  if (string == "stop") {
-    controller('f');
+  if (string == "go") {
+    char path[] = {'a', 'w', 'd', 'w', 'w', 'a', 'd'};
+    line_track(path);
   } else {
     controller('f');
   }
+}
+
+void line_track(char path[]) {
+    int i = 0;
+    int buffer_state = 0;
+    while (buffer_state == 0) {
+      String voice_input = bluetooth_voice();
+      
+      //      Serial.println("In buffer");
+      if (MLS() && !LTS() && !RTS()) {
+        Serial.print("\n Going " + controller('w'));
+      } else if (MLS()) {
+        Serial.print("\n\n Node Found - Going : ");
+        Serial.print(controller(path[i]) + "\n");
+        i++;
+        delay(1000);
+      } else {
+        Serial.println("\n Main line sensor not found");
+        controller('f');
+      }
+      delay(500);
+      
+      if (voice_input.length()) {
+       buffer_state = 1;
+        controller('f');
+        Serial.println("Buffer Exit");
+
+      }
+    }
 }
 
 bool MLS() {
